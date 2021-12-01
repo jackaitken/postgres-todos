@@ -39,11 +39,6 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use((req, res) => {
-  res.locals.store.testQuery();
-  res.send("quitting");
-});
-
 // Extract session info
 app.use((req, res, next) => {
   res.locals.flash = req.session.flash;
@@ -57,20 +52,24 @@ app.get("/", (req, res) => {
 });
 
 // Render the list of todo lists
-app.get("/lists", (req, res) => {
-  let store = res.locals.store;
-  let todoLists = store.sortedTodoLists();
+app.get("/lists", async (req, res, next) => {
+  try {
+    let store = res.locals.store;
+    let todoLists = await store.sortedTodoLists();
 
-  let todosInfo = todoLists.map(todoList => ({
-    countAllTodos: todoList.todos.length,
-    countDoneTodos: todoList.todos.filter(todo => todo.done).length,
-    isDone: store.isDoneTodoList(todoList),
-  }));
+    let todosInfo = todoLists.map(todoList => ({
+      countAllTodos: todoList.todos.length,
+      countDoneTodos: todoList.todos.filter(todo => todo.done).length,
+      isDone: store.isDoneTodoList(todoList),
+    }));
 
-  res.render("lists", {
-    todoLists,
-    todosInfo
-  });
+    res.render("lists", {
+      todoLists,
+      todosInfo
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Render new todo list page
